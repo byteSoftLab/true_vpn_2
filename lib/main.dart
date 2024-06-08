@@ -21,16 +21,11 @@ class VpnScreen extends StatefulWidget {
 
 class _VpnScreenState extends State<VpnScreen> {
   static const platform = MethodChannel('com.bytesoftlab.true_vpn/vpn');
-  final TextEditingController _ipController = TextEditingController();
-  final TextEditingController _portController = TextEditingController();
   String _status = 'Disconnected';
 
   Future<void> _connectVpn() async {
     try {
-      final String result = await platform.invokeMethod('connectVpn', {
-        'ip': _ipController.text,
-        'port': int.parse(_portController.text),
-      });
+      final String result = await platform.invokeMethod('connectVpn');
       setState(() {
         _status = result;
       });
@@ -58,28 +53,12 @@ class _VpnScreenState extends State<VpnScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('VPN Proxy Manager'),
+        title: Text('VPN Manager'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            TextField(
-              controller: _ipController,
-              decoration: InputDecoration(
-                labelText: 'Proxy IP',
-                hintText: 'Enter Proxy IP',
-              ),
-            ),
-            TextField(
-              controller: _portController,
-              decoration: InputDecoration(
-                labelText: 'Proxy Port',
-                hintText: 'Enter Proxy Port',
-              ),
-              keyboardType: TextInputType.number,
-            ),
-            SizedBox(height: 20),
             ElevatedButton(
               onPressed: _connectVpn,
               child: Text('Connect VPN'),

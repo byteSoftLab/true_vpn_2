@@ -1,34 +1,47 @@
 package com.bytesoftlab.true_vpn
 
-import android.app.Activity
 import android.content.Intent
 import android.net.VpnService
 import android.os.Bundle
+import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.MethodChannel
 
-class MainActivity : Activity() {
-    private val VPN_REQUEST_CODE = 100
+class MainActivity : FlutterActivity() {
+    private val CHANNEL = "com.bytesoftlab.true_vpn/vpn"
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        startVpn()
-    }
-
-    private fun startVpn() {
-        val intent = VpnService.prepare(this)
-        if (intent != null) {
-            startActivityForResult(intent, VPN_REQUEST_CODE)
-        } else {
-            onActivityResult(VPN_REQUEST_CODE, RESULT_OK, null)
+    override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
+        super.configureFlutterEngine(flutterEngine)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "connectVpn" -> {
+                    val intent = VpnService.prepare(this)
+                    if (intent != null) {
+                        startActivityForResult(intent, 0)
+                    } else {
+                        onActivityResult(0, RESULT_OK, null)
+                    }
+                    result.success("VPN started")
+                }
+                "disconnectVpn" -> {
+                    stopVpnService()
+                    result.success("VPN stopped")
+                }
+                else -> result.notImplemented()
+            }
         }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == VPN_REQUEST_CODE && resultCode == RESULT_OK) {
+        if (requestCode == 0 && resultCode == RESULT_OK) {
             val intent = Intent(this, MyVpnService::class.java)
-            intent.putExtra("proxy_ip", "your.proxy.ip.address") // Replace with actual proxy IP
-            intent.putExtra("proxy_port", 8080) // Replace with actual proxy port
             startService(intent)
         }
+    }
+
+    private fun stopVpnService() {
+        val intent = Intent(this, MyVpnService::class.java)
+        stopService(intent)
     }
 }
